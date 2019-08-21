@@ -35,17 +35,14 @@ public class GameView extends SurfaceView implements Runnable {
     private int screenH;
     private int mostKills;
     private int kills;
+    private int lives;
 
     private long startFrameTime;
     private long timeThisFrame;
-    private int name;
-    EnemyCharacter enemy;
-    private Bitmap bitmap;
-
-    private float scale;
     private Background bG;
     private PlayerCharacter player;
-    private Arrow arrow;
+    private Arrow[] quiver;
+    private int arrowCount;
 
     List<EnemyCharacter> enemies = new CopyOnWriteArrayList<>();
 
@@ -60,10 +57,15 @@ public class GameView extends SurfaceView implements Runnable {
         screenH = screenHeight;
         player = new PlayerCharacter(context, screenWidth, screenHeight);
         bG = new Background(context, screenW, screenH);
-        arrow = new Arrow(context, screenWidth, screenHeight);
-        for(int i = 0; i < 3; i++) {
+        quiver = new Arrow[3];
+        arrowCount = 0;
+        for(int i = 0; i < quiver.length; i++){
+            quiver[i] = new Arrow(context, screenWidth, screenHeight);
+        }
+        for(int i = 0; i < 4; i++) {
             enemies.add(new EnemyCharacter(context, screenWidth, screenHeight));
         }
+        startGame();
     }
 
     public void draw(){
@@ -73,8 +75,10 @@ public class GameView extends SurfaceView implements Runnable {
             paint.setColor(Color.WHITE);
             canvas.drawBitmap(bG.getBitmap(), 0, 0, paint);
             canvas.drawBitmap(player.getBitmap(), player.getX(), player.getY(), paint);
-            if(arrow.getShoot()){
-                canvas.drawBitmap(arrow.getBitmap(), arrow.getX(), arrow.getY(), paint);
+            for(int i = 0; i < quiver.length; i++) {
+                if (quiver[i].getShoot()) {
+                    canvas.drawBitmap(quiver[i].getBitmap(), quiver[i].getX(), quiver[i].getY(), paint);
+                }
             }
             for(EnemyCharacter ec: enemies) {
                 canvas.drawBitmap(ec.getBitmap(), ec.getX(), ec.getY(), paint);
@@ -90,7 +94,7 @@ public class GameView extends SurfaceView implements Runnable {
                 canvas.drawText("SHOOT", getWidth() - getWidth() / 4, getHeight() - 50, paint);
                 canvas.drawText("Kills: " + kills, screenW / 2, 60, paint);
                 canvas.drawText("HighScore: " + mostKills, 10, 60, paint);
-
+                canvas.drawText("Lives: " + lives,screenW / 4,60,paint);
             }
             else
             {
@@ -112,25 +116,40 @@ public class GameView extends SurfaceView implements Runnable {
         boolean hitDetected = false;
 
         for(EnemyCharacter ec: enemies){
-            if(Rect.intersects(player.getHitBox(), ec.getHitBox()) || Rect.intersects(arrow.getHitBox(), ec.getHitBox())){
+            if(Rect.intersects(player.getHitBox(), ec.getHitBox())){
                 hitDetected = true;
                 kills++;
                 soundEffects.play(SoundEffects.Sound.BUMP);
                 ec.setX(-ec.getBitmap().getWidth());
             }
+            for(int i = 0; i < quiver.length; i++){
+                if (Rect.intersects(quiver[i].getHitBox(), ec.getHitBox()) && quiver[i].getShoot()) {
+                    ec.setX(-ec.getBitmap().getWidth());
+                    quiver[i].setX(screenW);
+                    kills++;
+                    soundEffects.play(SoundEffects.Sound.BUMP);
+                }
+            }
             ec.update();
         }
-        arrow.update(player.getX(), player.getY());
+        for(int i = 0; i < quiver.length; i++) {
+            quiver[i].update(player.getX(), player.getY());
+        }
         player.update();
 
         if(hitDetected){
             player.reduceLive();
+            lives = player.getLive();
             if(player.getLive()==0){
                 soundEffects.play(SoundEffects.Sound.DESTROYED);
                 gameEnded = true;
             }
         }
-
+        if(gameEnded){
+            if(mostKills < kills){
+                HighScoreRecorder.instance(null).store(kills);
+            }
+        }
     }
 
     @Override
@@ -149,28 +168,27 @@ public class GameView extends SurfaceView implements Runnable {
     @Override
     public boolean onTouchEvent(MotionEvent motionEvent){
         switch(motionEvent.getActionMasked()){
+
             case MotionEvent.ACTION_DOWN:
-                if(motionEvent.getX() < screenW/2){
+                if(gameEnded){
+                    startGame();
+                } else if (motionEvent.getX() < screenW / 2 && player.getY() >= player.getGround() && !player.getJump()) {
                     player.setJump(true);
-                    if(gameEnded){
-                        if(mostKills < kills) {
-                            mostKills = kills;
-                            HighScoreRecorder.instance(null).store(mostKills);
-                        }
-                        kills = 0;
-                        startGame();
-                    }
-                }
-                if(motionEvent.getX() > screenW/2){
-                    arrow.setShoot(true);
+                } else if (motionEvent.getX() > screenW / 2) {
+                    quiver[arrowCount].setShoot(true);
+                    arrowCount = (arrowCount + 1) % 3;
                 }
                 break;
+
             case MotionEvent.ACTION_UP:
-                player.setJump(false);
+                if (motionEvent.getX() < screenW / 2) {
+                    player.setJump(false);
+                }
                 break;
             case MotionEvent.ACTION_POINTER_DOWN: {
                 if(motionEvent.getPointerCount()>1){
-                    arrow.setShoot(true);
+                    quiver[arrowCount].setShoot(true);
+                    arrowCount = (arrowCount + 1) % 3;
                 }
                 break;
             }
@@ -179,15 +197,17 @@ public class GameView extends SurfaceView implements Runnable {
         return true;
     }
     private void startGame(){
-
         mostKills = (int) HighScoreRecorder.instance(context).retrieve();
-
         // Initialize game objects
-        player = new PlayerCharacter(context, screenW, screenH);
+        player.setLive(3);
+
+       // player = new PlayerCharacter(context, screenW, screenH);
         for(EnemyCharacter ec: enemies){
            ec.setX(screenW);
         }
         gameEnded = false;
+        kills = 0;
+        lives = player.getLive();
         soundEffects.play(SoundEffects.Sound.START);
     }
 

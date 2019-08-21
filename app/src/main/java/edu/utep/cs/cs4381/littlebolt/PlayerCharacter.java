@@ -9,7 +9,7 @@ import java.util.Random;
 
 public class PlayerCharacter {
 
-    Random generator = new Random();
+  //  Random generator = new Random();
     private int x;
     private int y;
     private float screenX;
@@ -27,12 +27,12 @@ public class PlayerCharacter {
         this.screenX = screenW;
         this.screenY = screenH-(screenH/3);
         this.ctx = ctx;
-        live = 3;
         initPlayerCharacter();
     }
 
     private void initPlayerCharacter() {
-        x = 0;
+        live = 3;
+        x = 5;
         speed = 8;
         bitmap = BitmapFactory.decodeResource(ctx.getResources(), R.drawable.hero1);
         bitmap = scaleBitmap(bitmap, (int) screenX);
@@ -67,6 +67,10 @@ public class PlayerCharacter {
     }
     public void reduceLive(){live--;}
 
+    public int getLive(){
+        return live;
+    }
+
     public Bitmap getBitmap() {
         return bitmap;
     }
@@ -79,14 +83,6 @@ public class PlayerCharacter {
         return y;
     }
 
-    public void setY(int y) {
-        this.y = y;
-    }
-
-    public int getSpeed() {
-        return speed;
-    }
-
     public void setJump(boolean b) {
         jump = b;
     }
@@ -94,8 +90,17 @@ public class PlayerCharacter {
     public Rect getHitBox() {
         return hitBox;
     }
-    public int getLive() {
-        return live;
+
+    public float getGround() {
+        return ground;
+    }
+
+    public boolean getJump() {
+        return jump;
+    }
+
+    public void setLive(int l) {
+        this.live = l;
     }
 
 

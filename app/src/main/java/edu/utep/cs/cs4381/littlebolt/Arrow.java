@@ -30,7 +30,7 @@ public class Arrow{
         y = screenHeight-(screenHeight/3);
         bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.arrow);
         bitmap = scaleBitmap(bitmap, screenWidth);
-        speed = 20;
+        speed = 15;
         hitBox = new Rect(x, y, bitmap.getWidth(), bitmap.getHeight());
     }
 
@@ -45,6 +45,10 @@ public class Arrow{
             x = (int) playerX;
             y = (int) playerY;
         }
+        hitBox.left = x;
+        hitBox.top = y;
+        hitBox.right = x + bitmap.getWidth();
+        hitBox.bottom = y + bitmap.getHeight();
     }
 
     public void setShoot(boolean b){
@@ -72,10 +76,15 @@ public class Arrow{
         return y;
     }
 
-
-    public Rect getHitBox() { return hitBox; }
-
     public Bitmap getBitmap() {
         return bitmap;
+    }
+
+    public Rect getHitBox() {
+        return hitBox;
+    }
+
+    public void setX(int screenW) {
+        x = screenW;
     }
 }

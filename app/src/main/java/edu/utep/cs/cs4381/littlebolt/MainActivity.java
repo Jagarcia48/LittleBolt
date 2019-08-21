@@ -10,14 +10,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         SoundEffects.instance(this);//initialize all sounds by loading all sounds
-
         setContentView(R.layout.activity_main);
-
-        //((TextView)findViewById(R.id.highScore)).setText("High Score: " + Long.toString(HighScoreRecorder.instance(this).retrieve()/1000) + " s");
-
-        final Button playButton = findViewById(R.id.startButton);
+        Button playButton = findViewById(R.id.startButton);
         playButton.setOnClickListener(v -> {
             startActivity(new Intent(this, GameActivity.class));
         });

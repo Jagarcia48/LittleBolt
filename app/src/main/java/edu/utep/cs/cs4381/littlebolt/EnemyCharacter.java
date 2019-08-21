@@ -47,8 +47,8 @@ public class EnemyCharacter  {
         }
         hitBox.left = x;
         hitBox.top = y;
-        hitBox.right = (int) (x + bitmap.getWidth());
-        hitBox.bottom = (int) (y + bitmap.getHeight());
+        hitBox.right = (x + bitmap.getWidth());
+        hitBox.bottom = (y + bitmap.getHeight());
     }
 
     private static int[] imageIds = {
